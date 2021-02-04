@@ -23,8 +23,10 @@ func (r *Relay) handleGCP(ctx context.Context, conn *grpc.ClientConn, messages [
 	if _, err := client.AddGCPRecord(ctx, &services.GCPRecordRequest{
 		Records: sinkRecords,
 	}); err != nil {
-		return errors.Wrap(err, "unable to complete AddGCPRecord call")
+		return fmt.Errorf("unable to push '%d' gcp-pubsub sink records to grpc-collector: %s",
+			len(messages), err)
 	}
+
 	r.log.Debug("successfully handled GCP pubsub message")
 	return nil
 }

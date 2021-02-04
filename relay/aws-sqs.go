@@ -26,7 +26,9 @@ func (r *Relay) handleSQS(ctx context.Context, conn *grpc.ClientConn, messages [
 	if _, err := client.AddSQSRecord(ctx, &services.SQSRecordRequest{
 		Records: sinkRecords,
 	}); err != nil {
-		return errors.Wrap(err, "unable to complete AddSQSRecord call")
+		return fmt.Errorf("unable to push '%d' sqs sink records to grpc-collector: %s",
+			len(messages), err)
+
 	}
 
 	// Optionally delete message from AWS SQS

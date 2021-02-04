@@ -24,7 +24,8 @@ func (r *Relay) handleAzure(ctx context.Context, conn *grpc.ClientConn, messages
 	if _, err := client.AddAzureRecord(ctx, &services.AzureRecordRequest{
 		Records: sinkRecords,
 	}); err != nil {
-		return errors.Wrap(err, "unable to complete AddAzureRecord call")
+		return fmt.Errorf("unable to push '%d' azure sink records to grpc-collector: %s",
+			len(messages), err)
 	}
 
 	r.log.Debug("successfully handled azure queue message")
@@ -47,6 +48,7 @@ func (r *Relay) validateAzureRelayMessage(msg *types.RelayMessage) error {
 // convertUserPropertiesMap converts a map[string]interface{} to map[string]string
 func convertMapStringInterface(p map[string]interface{}) map[string]string {
 	props := make(map[string]string, 0)
+
 	for k, v := range p {
 		sv, ok := v.(string)
 		if !ok {

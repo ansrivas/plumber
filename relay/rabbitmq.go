@@ -24,7 +24,9 @@ func (r *Relay) handleRabbit(ctx context.Context, conn *grpc.ClientConn, message
 	if _, err := client.AddAMQPRecord(ctx, &services.AMQPRecordRequest{
 		Records: sinkRecords,
 	}); err != nil {
-		return errors.Wrap(err, "unable to complete AddAMQPRecord call")
+		return fmt.Errorf("unable to push '%d' amqp sink records to grpc-collector: %s",
+			len(messages), err)
+
 	}
 
 	r.log.Debug("successfully handled rabbit message")
