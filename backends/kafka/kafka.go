@@ -3,7 +3,9 @@ package kafka
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"syscall"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/batchcorp/plumber/cli"
+	"github.com/batchcorp/plumber/util"
 )
 
 const (
@@ -55,6 +58,20 @@ func NewReader(opts *cli.Options) (*KafkaReader, error) {
 		dialer.TLS = &tls.Config{
 			InsecureSkipVerify: true,
 		}
+	} else if opts.Kafka.MutualTLS {
+		// validate if all the keys are set, in case MutualTLS is set
+		err := util.AnyEmpty([]string{
+			opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig, err := getMutualTLSConfig(opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey)
+		if err != nil {
+			return nil, err
+		}
+		dialer.TLS = tlsConfig
 	}
 
 	auth, err := getAuthenticationMechanism(opts)
@@ -115,6 +132,20 @@ func NewWriter(opts *cli.Options) (*KafkaWriter, error) {
 		dialer.TLS = &tls.Config{
 			InsecureSkipVerify: true,
 		}
+	} else if opts.Kafka.MutualTLS {
+		// validate if all the keys are set, in case MutualTLS is set
+		err := util.AnyEmpty([]string{
+			opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig, err := getMutualTLSConfig(opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey)
+		if err != nil {
+			return nil, err
+		}
+		dialer.TLS = tlsConfig
 	}
 
 	auth, err := getAuthenticationMechanism(opts)
@@ -175,6 +206,24 @@ func getAuthenticationMechanism(opts *cli.Options) (sasl.Mechanism, error) {
 			Password: opts.Kafka.Password,
 		}, nil
 	}
+}
+
+func getMutualTLSConfig(caCertPath, clientCertPath, clientKeyPath string) (*tls.Config, error) {
+
+	caCert, err := ioutil.ReadFile(caCertPath)
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	cert, err := tls.LoadX509KeyPair(clientCertPath, clientKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	return &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{cert},
+	}, nil
 }
 
 // readPassword prompts the user for a password from stdin

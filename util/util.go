@@ -47,3 +47,12 @@ func DirsExist(dirs []string) error {
 
 	return errors.New(strings.Join(errs, "; "))
 }
+
+func AnyEmpty(input []string) error {
+	for _, val := range input {
+		if val == "" {
+			return errors.New("An entry in the provided list was found empty.")
+		}
+	}
+	return nil
+}
