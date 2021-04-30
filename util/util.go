@@ -48,6 +48,7 @@ func DirsExist(dirs []string) error {
 	return errors.New(strings.Join(errs, "; "))
 }
 
+// AnyEmpty checks if any of the element in an array is empty
 func AnyEmpty(input []string) error {
 	for _, val := range input {
 		if val == "" {

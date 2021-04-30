@@ -59,12 +59,11 @@ func NewReader(opts *cli.Options) (*KafkaReader, error) {
 			InsecureSkipVerify: true,
 		}
 	} else if opts.Kafka.MutualTLS {
-		// validate if all the keys are set, in case MutualTLS is set
 		err := util.AnyEmpty([]string{
 			opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "CaCert, ClientCert and ClientKey are required with mtls")
 		}
 
 		tlsConfig, err := getMutualTLSConfig(opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey)
@@ -133,12 +132,11 @@ func NewWriter(opts *cli.Options) (*KafkaWriter, error) {
 			InsecureSkipVerify: true,
 		}
 	} else if opts.Kafka.MutualTLS {
-		// validate if all the keys are set, in case MutualTLS is set
 		err := util.AnyEmpty([]string{
 			opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "CaCert, ClientCert and ClientKey are required with mtls")
 		}
 
 		tlsConfig, err := getMutualTLSConfig(opts.Kafka.CaCert, opts.Kafka.ClientCert, opts.Kafka.ClientKey)
